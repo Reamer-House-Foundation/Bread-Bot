@@ -13,8 +13,10 @@ def make_return_dir(dirname):
         os.mkdir(dirname)
     return dirname
 
-create_bread_dir = lambda: make_return_dir('bread')
-create_not_bread_dir = lambda: make_return_dir('not_bread')
+DATA_DIR = 'data'
+
+create_bread_dir = lambda: make_return_dir(f'{DATA_DIR}/bread')
+create_not_bread_dir = lambda: make_return_dir(f'{DATA_DIR}/not_bread')
 
 def gather_class(img_class, count=100):
     filters = dict(
@@ -55,17 +57,20 @@ def generate_not_bread(count=1000, count_per_class=10):
             license='commercial,modify'
     )
 
-    word_count = count // count_per_class
     not_bread_dir = create_not_bread_dir()
-
-    nouns = generate_nouns(count=word_count)
 
     bing_crawler = BingImageCrawler(downloader_threads=4, storage={'root_dir': not_bread_dir})
 
-    for word in nouns:
-        bing_crawler.crawl(keyword=word, filters=filters,
-                           file_idx_offset=len(os.listdir(not_bread_dir)),
-                           max_num=count_per_class)
+    while len(os.listdir(not_bread_dir)) < count:
+        # Generate nouns in batches.  Even if we are scraping for 10 images each,
+        # sometimes we don't et that many
+        word_count = count // count_per_class
+        nouns = generate_nouns(count=word_count)
+
+        for word in nouns:
+            bing_crawler.crawl(keyword=word, filters=filters,
+                               file_idx_offset=len(os.listdir(not_bread_dir)),
+                               max_num=count_per_class)
 
 if len(sys.argv) >= 2:
     if 'notbread' in sys.argv[1]:
