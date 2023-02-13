@@ -1,6 +1,8 @@
 import os
 import random
 import sys
+import threading
+import requests
 
 from icrawler.builtin import BingImageCrawler
 
@@ -16,7 +18,53 @@ def make_return_dir(dirname):
 DATA_DIR = 'data'
 
 create_bread_dir = lambda: make_return_dir(f'{DATA_DIR}/bread')
-create_not_bread_dir = lambda: make_return_dir(f'{DATA_DIR}/not_bread')
+create_non_bread_dir = lambda: make_return_dir(f'{DATA_DIR}/not_bread')
+
+def _download_and_save_picsum(file_nm: str, height: int =150, width: int =150):
+    MASTER_LOREM_PICSUM_URL = f"https://picsum.photos/{width}/{height}"
+
+    with open(file_nm, 'wb') as img_file:
+        response = requests.get(MASTER_LOREM_PICSUM_URL, stream=True)
+
+        if not response.ok:
+            print(response)
+
+        for block in response.iter_content(1024):
+            if not block:
+                break
+
+            img_file.write(block)
+
+def _download_and_save_picsum_thread(dirname: str, some_range = tuple[int, int]):
+    a, b = some_range
+    for n in range(a, b):
+        file_nm = dirname + "/{:06d}.jpg".format(n+1)
+        print(file_nm)
+        _download_and_save_picsum(file_nm)
+
+def picsum(start_num: int, dirname: str, n_examples: int = 100, n_threads: int=5):
+    pics_per_thread = n_examples // n_threads
+    left_over = n_examples % n_threads
+
+    thread_list = \
+            list(map(
+                lambda some_range: threading.Thread(
+                    target=_download_and_save_picsum_thread,
+                    args=(dirname, some_range,)),
+                map(
+                    lambda t_num: (start_num + t_num * pics_per_thread,
+                                   start_num + (t_num + 1) * pics_per_thread),
+                    range(n_threads)
+                    )
+                ))
+
+    for t in thread_list:
+        t.start()
+
+    for t in thread_list:
+        t.join()
+
+    print('NON BREAD DONE')
 
 def gather_class(img_class, count=100):
     filters = dict(
@@ -25,7 +73,8 @@ def gather_class(img_class, count=100):
     )
 
     bing_crawler = BingImageCrawler(downloader_threads=4, storage={'root_dir': img_class})
-    bing_crawler.crawl(keyword=img_class, filters=filters, offset=0, max_num=count)
+    bing_crawler.crawl(keyword=img_class, filters=filters, offset=0, max_num=count,
+                       file_idx_offset=len(os.listdir(img_class)))
 
 def generate_nouns(count=100):
     # Some things we have to download for nltk first..
@@ -57,7 +106,7 @@ def generate_not_bread(count=1000, count_per_class=10):
             license='commercial,modify'
     )
 
-    not_bread_dir = create_not_bread_dir()
+    not_bread_dir = create_non_bread_dir()
 
     bing_crawler = BingImageCrawler(downloader_threads=4, storage={'root_dir': not_bread_dir})
 
@@ -73,7 +122,12 @@ def generate_not_bread(count=1000, count_per_class=10):
                                max_num=count_per_class)
 
 if len(sys.argv) >= 2:
-    if 'notbread' in sys.argv[1]:
+    non_bread_dir = create_non_bread_dir()
+    start_num = len(os.listdir(non_bread_dir))
+
+    if 'raynotbread' in sys.argv[1]:
+        picsum(start_num, non_bread_dir)
+    elif 'notbread' in sys.argv[1]:
         generate_not_bread()
     elif 'bread' in sys.argv[1]:
         gather_class(create_bread_dir())
