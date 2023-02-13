@@ -9,8 +9,10 @@ def make_return_dir(dirname):
         os.mkdir(dirname)
     return dirname
 
-create_bread_dir = lambda: make_return_dir('bread')
-create_non_bread_dir = lambda: make_return_dir('non_bread')
+DATA_DIR = 'data'
+
+create_bread_dir = lambda: make_return_dir(f'{DATA_DIR}/bread')
+create_non_bread_dir = lambda: make_return_dir(f'{DATA_DIR}/not_bread')
 
 def _download_and_save_picsum(file_nm: str, height: int =150, width: int =150):
     MASTER_LOREM_PICSUM_URL = f"https://picsum.photos/{width}/{height}"
@@ -34,7 +36,7 @@ def _download_and_save_picsum_thread(dirname: str, some_range = tuple[int, int])
         print(file_nm)
         _download_and_save_picsum(file_nm)
 
-def picsum(dirname: str, n_examples: int = 100, n_threads: int=5):
+def picsum(start_num: int, dirname: str, n_examples: int = 100, n_threads: int=5):
     pics_per_thread = n_examples // n_threads
     left_over = n_examples % n_threads
 
@@ -44,7 +46,8 @@ def picsum(dirname: str, n_examples: int = 100, n_threads: int=5):
                     target=_download_and_save_picsum_thread,
                     args=(dirname, some_range,)),
                 map(
-                    lambda t_num: (t_num * pics_per_thread, (t_num + 1) * pics_per_thread),
+                    lambda t_num: (start_num + t_num * pics_per_thread,
+                                   start_num + (t_num + 1) * pics_per_thread),
                     range(n_threads)
                     )
                 ))
@@ -58,10 +61,9 @@ def picsum(dirname: str, n_examples: int = 100, n_threads: int=5):
     print('NON BREAD DONE')
 
 # download non_bread
-picsum(create_non_bread_dir())
+non_bread_dir = create_non_bread_dir()
+start_num = len(os.listdir(non_bread_dir))
+
+picsum(start_num, non_bread_dir)
 
 print('done')
-
-
-
-
