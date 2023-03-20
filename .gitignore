@@ -1,2 +1,5 @@
 # created by virtualenv automatically
 breadenv
+*__pycache__*
+.*.un~
+*.pyc

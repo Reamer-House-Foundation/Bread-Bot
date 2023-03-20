@@ -1,0 +1,20 @@
+services:
+  classifier_base:
+    build:
+      context: classifier_base
+        #storage_opt:
+        #  size: 50GB
+
+  web:
+    build:
+      context: app
+      args:
+        BASE_IMAGE: classifier_base:latest
+
+    # flask requires SIGINT to stop gracefully
+    # (default stop signal from Compose is SIGTERM)
+    stop_signal: SIGINT
+    ports:
+      - '8000:8000'
+    depends_on:
+      - classifier_base
