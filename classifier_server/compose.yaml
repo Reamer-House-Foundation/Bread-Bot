@@ -2,8 +2,6 @@ services:
   classifier_base:
     build:
       context: classifier_base
-        #storage_opt:
-        #  size: 50GB
 
   web:
     build:

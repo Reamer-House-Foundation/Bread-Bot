@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 # Takes awhile to import these.. do it after we have verified the user's parameters
 from transformers import (
@@ -21,6 +21,7 @@ import torch
 
 from PIL import Image
 
+# TODO: This should be an ENV variable from the docker compose
 MODEL_PATH = 'outputs/'
 
 # Load in the model for the bread bot
@@ -59,6 +60,7 @@ app = Flask(__name__)
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    response = {}
     # Get the image data from the request
     file = request.files['image']
 
@@ -75,11 +77,15 @@ def predict():
     logits = outputs.logits
 
     prediction = logits.argmax(-1)
-    return f'> Predicted class: {model.config.id2label[prediction.item()]}\n'
 
-@app.route('/')
-def hello():
-	return "Hello World!"
+    # Return the predicted class and the confidence of each class
+    response['class'] = f'{model.config.id2label[prediction.item()]}'
+
+    for ii, confidence in enumerate(logits.tolist()[0]):
+        label: str = model.config.id2label[ii]
+        response[f'{label}_confidence'] = confidence
+
+    return jsonify(response)
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=8000)
