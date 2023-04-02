@@ -67,7 +67,14 @@ def predict():
     # Do something with the image data (e.g. save it to disk, process it, etc.)
     file.save('tmp_bread.jpg')
 
+    # Just because we are saving it as a jpg, it might not be
     image = Image.open('tmp_bread.jpg')
+
+    # Functions in the Transformers image transform library currently only support
+    # Grayscale and RGB, Alpha channel is not supported
+    #       github.com/huggingface/transformers/issues/21981
+    if image.mode in ('RGBA', 'LA') or (image.mode == 'P' and 'transparency' in image.info):
+        image = image.convert('RGB')
 
     processed = image_processor(image)
     processed.pixel_values = _test_transforms(image.convert('RGB'))
