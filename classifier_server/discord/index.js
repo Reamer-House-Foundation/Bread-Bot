@@ -43,11 +43,11 @@ client.on('messageCreate', async (message) => {
 
         if (result.data.class == 'bread') {
             message.reply(`This image is bread!\n\n` +
-                          `Bread Confidence:\t${result.data.bread_confidence}\n`
+                          `Bread Confidence:\t${result.data.bread_confidence}\n` +
                           `Not-Bread Confidence:\t${result.data.not_bread_confidence}`);
         } else {
             message.reply(`This image is bread!\n\n` +
-                          `Bread Confidence:\t${result.data.bread_confidence}\n`
+                          `Bread Confidence:\t${result.data.bread_confidence}\n` +
                           `Not-Bread Confidence:\t${result.data.not_bread_confidence}`);
         }
     } catch (error) {
