@@ -6,3 +6,4 @@ breadenv
 *.env
 node_modules
 *.jpg
+*output*
