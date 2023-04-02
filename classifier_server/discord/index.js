@@ -35,7 +35,7 @@ client.on('messageCreate', async (message) => {
 
         // TODO: Make this settable using env variables
         // Send a POST request with the image using axios
-        const result = await axios.post('http://localhost:8000/predict', formData, {
+        const result = await axios.post('http://web:8000/predict', formData, {
             headers: {
                 'Content-Type': `multipart/form-data; boundary=${formData._boundary}`,
             },
