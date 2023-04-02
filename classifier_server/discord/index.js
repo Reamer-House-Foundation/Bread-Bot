@@ -46,7 +46,7 @@ client.on('messageCreate', async (message) => {
                           `Bread Confidence:\t${result.data.bread_confidence}\n` +
                           `Not-Bread Confidence:\t${result.data.not_bread_confidence}`);
         } else {
-            message.reply(`This image is bread!\n\n` +
+            message.reply(`This image is not bread!\n\n` +
                           `Bread Confidence:\t${result.data.bread_confidence}\n` +
                           `Not-Bread Confidence:\t${result.data.not_bread_confidence}`);
         }
