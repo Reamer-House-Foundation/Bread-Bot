@@ -1,12 +1,14 @@
 services:
+  # This is just to speed up rebuilding the classifier app, since the required
+  # modules shouldn't change
   classifier_base:
     build:
       context: classifier_base
 
-  web:
+  classifier:
     container_name: flask_classifier
     build:
-      context: app
+      context: classifier
       args:
         BASE_IMAGE: classifier_base:latest
 
