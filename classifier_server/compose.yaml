@@ -1,0 +1,26 @@
+services:
+  # This is just to speed up rebuilding the classifier app, since the required
+  # modules shouldn't change
+  classifier_base:
+    build:
+      context: classifier_base
+
+  classifier:
+    container_name: flask_classifier
+    build:
+      context: classifier
+      args:
+        BASE_IMAGE: classifier_base:latest
+
+    # flask requires SIGINT to stop gracefully
+    # (default stop signal from Compose is SIGTERM)
+    stop_signal: SIGINT
+    ports:
+      - '8000:8000'
+    depends_on:
+      - classifier_base
+
+  discord_bot:
+    build:
+      context: discord
+    container_name: discord_bot
