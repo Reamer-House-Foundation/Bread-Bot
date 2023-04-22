@@ -22,7 +22,7 @@ from typing import Optional
 import evaluate
 import numpy as np
 import torch
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from PIL import Image
 from torchvision.transforms import (
     CenterCrop,
@@ -33,6 +33,7 @@ from torchvision.transforms import (
     Resize,
     ToTensor,
 )
+import torchvision.transforms as trans
 
 import transformers
 from transformers import (
@@ -239,6 +240,21 @@ def main():
             cache_dir=model_args.cache_dir,
             task="image-classification",
         )
+        d2 = load_dataset(
+            "imagefolder",
+            data_files=data_files,
+            cache_dir=model_args.cache_dir,
+            task="image-classification",
+        )
+        d3 = load_dataset(
+            "imagefolder",
+            data_files=data_files,
+            cache_dir=model_args.cache_dir,
+            task="image-classification",
+        )
+
+        dataset.update(d2)
+        dataset.update(d3)
 
     # If we don't have a validation split, split off a percentage of train as validation.
     data_args.train_val_split = None if "validation" in dataset.keys() else data_args.train_val_split
@@ -296,14 +312,34 @@ def main():
     else:
         size = (image_processor.size["height"], image_processor.size["width"])
     normalize = Normalize(mean=image_processor.image_mean, std=image_processor.image_std)
-    _train_transforms = Compose(
+    _train_transforms1 = Compose(
         [
             RandomResizedCrop(size),
             RandomHorizontalFlip(),
+            trans.RandomAutocontrast(.3),
+            trans.RandomEqualize(.3),
+            trans.RandomGrayscale(.1),
+            trans.RandomPerspective(distortion_scale=0.6, p=.7),
             ToTensor(),
             normalize,
         ]
     )
+    _train_transforms2 = Compose(
+        [
+            trans.RandAugment(),
+            ToTensor(),
+            normalize,
+        ]
+    )
+    _train_transforms3 = Compose(
+        [
+            trans.GaussianBlur(kernel_size=(5,9), sigma=(0.1, 5)),
+            ToTensor(),
+            normalize,
+        ]
+    )
+
+
     _val_transforms = Compose(
         [
             Resize(size),
@@ -315,9 +351,21 @@ def main():
 
     def train_transforms(example_batch):
         """Apply _train_transforms across a batch."""
-        example_batch["pixel_values"] = [
-            _train_transforms(pil_img.convert("RGB")) for pil_img in example_batch["image"]
-        ]
+        import copy
+
+        eb_len = len(example_batch["image"])
+
+        batch1 = copy.deepcopy(example_batch["image"][:eb_len//3])
+        batch2 = copy.deepcopy(example_batch["image"][eb_len//3:2*eb_len//3])
+        batch3 = copy.deepcopy(example_batch["image"][2*eb_len//3:])
+
+        batch1_pixel_values = [_train_transforms1(pil_img.convert("RGB")) for pil_img in batch1]
+        batch2_pixel_values = [_train_transforms1(pil_img.convert("RGB")) for pil_img in batch2]
+        batch3_pixel_values = [_train_transforms1(pil_img.convert("RGB")) for pil_img in batch3]
+
+        example_batch['image'] = batch1 + batch2 + batch3
+        example_batch['pixel_values'] = batch1_pixel_values + batch2_pixel_values + batch3_pixel_values
+
         return example_batch
 
     def val_transforms(example_batch):
@@ -363,6 +411,7 @@ def main():
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
+        print(checkpoint)
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
         trainer.save_model()
         trainer.log_metrics("train", train_result.metrics)
