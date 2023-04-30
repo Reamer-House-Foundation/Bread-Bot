@@ -5,8 +5,10 @@ const FormData = require('form-data');
 
 dotenv.config();
 const TOKEN = process.env.TOKEN;
+const CHANNELS = process.env.CHANNELS.split(',');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages,
+                                      GatewayIntentBits.MessageContent] });
 
 client.once(Events.ClientReady, c => {
         console.log(`Ready! Logged in as ${c.user.tag}`);
@@ -16,7 +18,9 @@ client.on('messageCreate', async (message) => {
     if (message.author.bot || !message.attachments.size) return;
 
     const mentioned = message.mentions.users.has(client.user.id);
-    if (!mentioned) return;
+    const food_channel = CHANNELS.includes(message.channel.id);
+
+    if (!mentioned && !food_channel) return;
 
     const imageUrl = message.attachments.first().url;
 
