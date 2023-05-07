@@ -42,7 +42,7 @@ def _download_and_save_picsum_thread(dirname: str, some_range = tuple[int, int])
         print(file_nm)
         _download_and_save_picsum(file_nm)
 
-def picsum(start_num: int, dirname: str, n_examples: int = 100, n_threads: int=5):
+def picsum(start_num: int, dirname: str, n_examples: int = 201, n_threads: int=5):
     pics_per_thread = n_examples // n_threads
     left_over = n_examples % n_threads
 
@@ -66,15 +66,18 @@ def picsum(start_num: int, dirname: str, n_examples: int = 100, n_threads: int=5
 
     print('NON BREAD DONE')
 
-def gather_class(img_class, count=100):
-    filters = dict(
-            size='small',
-            license='commercial,modify'
-    )
+def gather_class(img_class, dirname=None, count=100):
+    #filters = dict(
+    #        size='small',
+    #        license='commercial,modify'
+    #)
 
-    bing_crawler = BingImageCrawler(downloader_threads=4, storage={'root_dir': img_class})
-    bing_crawler.crawl(keyword=img_class, filters=filters, offset=0, max_num=count,
-                       file_idx_offset=len(os.listdir(img_class)))
+    if dirname is None:
+        dirname = img_class
+
+    bing_crawler = BingImageCrawler(downloader_threads=4, storage={'root_dir': dirname})
+    bing_crawler.crawl(keyword=img_class, offset=0, max_num=count,
+                       file_idx_offset=len(os.listdir(dirname)))
 
 def generate_nouns(count=100):
     # Some things we have to download for nltk first..
@@ -101,10 +104,10 @@ def generate_nouns(count=100):
     return random.sample(nouns, count)
 
 def generate_not_bread(count=1000, count_per_class=10):
-    filters = dict(
-            size='small',
-            license='commercial,modify'
-    )
+    #filters = dict(
+    #        size='small',
+    #        license='commercial,modify'
+    #)
 
     not_bread_dir = create_non_bread_dir()
 
@@ -117,7 +120,7 @@ def generate_not_bread(count=1000, count_per_class=10):
         nouns = generate_nouns(count=word_count)
 
         for word in nouns:
-            bing_crawler.crawl(keyword=word, filters=filters,
+            bing_crawler.crawl(keyword=word, #filters=filters,
                                file_idx_offset=len(os.listdir(not_bread_dir)),
                                max_num=count_per_class)
 
@@ -126,11 +129,20 @@ if len(sys.argv) >= 2:
     start_num = len(os.listdir(non_bread_dir))
 
     if 'raynotbread' in sys.argv[1]:
-        picsum(start_num, non_bread_dir)
+        picsum(start_num, 'test/not_bread')
     elif 'notbread' in sys.argv[1]:
         generate_not_bread()
     elif 'bread' in sys.argv[1]:
-        gather_class(create_bread_dir())
+        if len(sys.argv) > 2:
+            img_class = sys.argv[2]
+        else:
+            img_class = create_bread_dir()
+
+        #for img_class in ['banana_bread', 'baguette', 'cibatta', 'cornbread', 'focaccia',
+        #                  'multigrain_bread', 'pumpernickel', 'rye_bread', 'soda_bread',
+        #                  'whole_wheat_bread']:
+        for img_class in ['bread_slice', 'sliced_bread', 'piece_of_bread']:
+            gather_class(img_class, dirname='test/bread')
         print('done')
     else:
         print(f'Unknown command {sys.argv[1]}')
