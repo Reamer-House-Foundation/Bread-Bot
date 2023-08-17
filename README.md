@@ -30,4 +30,4 @@ Any time an image is uploaded in the particular channels, the bot will run the i
 ### Dataset
 The "Bread" dataset is comprised of images of bread found on the internet, images of bread that I and my friends took, as well as images generated using [Stable Diffusion](https://huggingface.co/spaces/stabilityai/stable-diffusion).
 
-The dataset is also available on [Google Drive](https://drive.google.com/file/d/18i1QsXHKObRnu-4Sfcbc9ya-1vflDEWW/view?usp=sharing).
+I have the dataset saved off locally; it is not currently posted anywhere on the internet.  If you are interested in a dataset of labeled bread images, reach out to me and I can provide it to you.
